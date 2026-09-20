@@ -112,6 +112,39 @@ Score uncompressed geometry: transport quantisation inflates richness on dense m
 staying invisible. A mesh with fewer than 50 active pixels at 1024 gets `status == "too_small"`
 and no score.
 
+## Shipped Example
+
+`examples/rifle/` holds one Objaverse reference model (`reference.glb`, 140,482 faces, one 4K
+texture), the rendered input view (`input.jpg`) and two generations made from it: `meshy7.glb`
+(Meshy 7, meshy-7.1 at standard geometry resolution) and `tripo31.glb` (Tripo 3.1). The meshes are
+stored with Git LFS.
+
+```bash
+python examples/run_rifle.py
+```
+
+scores both generations with the three benchmarks and compares every value with
+`examples/rifle/expected.json` at the float32 tolerance. Expected values, in percent:
+
+| benchmark | dimension | Meshy 7 | Tripo 3.1 |
+|---|---|---|---|
+| geometry alignment | Overall Proportion | 100.0 | 92.7 |
+| geometry alignment | Spatial Distribution | 90.0 | 84.0 |
+| geometry alignment | Surface Details | 73.4 | 60.7 |
+| geometry alignment | overall | 87.8 | 79.1 |
+| texture alignment | Color | 70.0 | 68.9 |
+| texture alignment | Texture Style | 73.5 | 60.9 |
+| texture alignment | Semantic Details | 67.7 | 56.1 |
+| texture alignment | overall | 70.4 | 62.0 |
+| mesh-texture agreement | | 91.1 | 90.0 |
+| mesh details | richness 1024 | 39.4 | 37.7 |
+| mesh details | richness 2048 | 26.0 | 23.7 |
+| mesh details | richness 4096 | 15.7 | 13.5 |
+| mesh details | DQ 4096 | 51.9 | 60.0 |
+
+One object shows what the metrics return and lets a user check an installation; it is not a
+comparison of the two systems.
+
 ## Reproducibility
 
 Every stage uses fixed seeds, fixed views and a pinned descriptor revision. Results are

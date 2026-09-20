@@ -1,0 +1,57 @@
+{
+ "reference": "reference.glb",
+ "input": "input.jpg",
+ "tolerance": 0.0005,
+ "generations": {
+  "meshy7": {
+   "file": "meshy7.glb",
+   "system": "Meshy 7",
+   "geometry": {
+    "proportion": 1.0,
+    "spatial": 0.8997056719314037,
+    "semantic": 0.7341675113218076,
+    "overall": 0.8779577277510704
+   },
+   "texture": {
+    "color": 0.6995,
+    "style": 0.7349,
+    "pattern": 0.6773,
+    "overall": 0.7039
+   },
+   "mesh_texture_agreement": 0.9111643556795398,
+   "details": {
+    "richness_1024": 0.393785863495326,
+    "richness_2048": 0.26015340948037274,
+    "richness_4096": 0.1567771203158237,
+    "quality_4096": 0.519115591343652
+   },
+   "api": "meshy-7.1, geometry_resolution standard, textured, PBR"
+  },
+  "tripo31": {
+   "file": "tripo31.glb",
+   "system": "Tripo 3.1",
+   "geometry": {
+    "proportion": 0.926829268292683,
+    "spatial": 0.8396491860642357,
+    "semantic": 0.6072709398570187,
+    "overall": 0.7912497980713123
+   },
+   "texture": {
+    "color": 0.6889,
+    "style": 0.609,
+    "pattern": 0.5615,
+    "overall": 0.6198
+   },
+   "mesh_texture_agreement": 0.8999731684967538,
+   "details": {
+    "richness_1024": 0.37666498543791604,
+    "richness_2048": 0.23720948187351307,
+    "richness_4096": 0.1351521224433126,
+    "quality_4096": 0.5995111363515758
+   },
+   "api": "Tripo v3.1, textured"
+  }
+ },
+ "reference_source": "Objaverse (Sketchfab) acb2ea94ef2d4f499ff239f903fe0368",
+ "input_view": "perspective render, 85 mm lens, camera at azimuth 333 and elevation 30 degrees, HDRI lighting, 1024 px"
+}
