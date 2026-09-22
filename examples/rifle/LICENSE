@@ -1,0 +1,21 @@
+The files in this directory are not covered by the MIT license of the meshybench repository.
+
+reference.glb, input.jpg
+  "Sci-Fi Gun" by AdamBetts
+  https://sketchfab.com/3d-models/sci-fi-gun-acb2ea94ef2d4f499ff239f903fe0368
+  Author: https://sketchfab.com/adambetts
+  License: Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+           https://creativecommons.org/licenses/by-nc/4.0/
+  reference.glb is the unmodified glTF export of the original, obtained through Objaverse
+  (object acb2ea94ef2d4f499ff239f903fe0368). input.jpg is a rendering of it.
+
+meshy7.glb, tripo31.glb
+  Image-to-3D generations produced from input.jpg by Meshy 7 and Tripo 3.1. They derive from
+  the work above and are distributed under the same CC BY-NC 4.0 terms with the same credit.
+
+Objaverse
+  The reference model is part of Objaverse, distributed under the Open Data Commons
+  Attribution License (ODC-By 1.0), https://opendatacommons.org/licenses/by/1-0/.
+  Deitke, M., Schwenk, D., Salvador, J., Weihs, L., Michel, O., VanderBilt, E., Schmidt, L.,
+  Ehsani, K., Kembhavi, A., Farhadi, A. Objaverse: A Universe of Annotated 3D Objects.
+  CVPR 2023, pages 13142-13153.
