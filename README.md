@@ -149,11 +149,11 @@ The object displays the returned metrics and lets a user verify an installation.
 the two systems.
 
 The reference model is "Sci-Fi Gun" by [AdamBetts](https://sketchfab.com/adambetts) on
-[Sketchfab](https://sketchfab.com/3d-models/sci-fi-gun-acb2ea94ef2d4f499ff239f903fe0368), obtained
-through [Objaverse](https://objaverse.allenai.org/) (Deitke et al., CVPR 2023) and licensed under
-[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). The example assets, including the
-two generations derived from it, keep that license and are excluded from the MIT license of the
-code; see `examples/rifle/LICENSE`.
+[Sketchfab](https://sketchfab.com/3d-models/sci-fi-gun-acb2ea94ef2d4f499ff239f903fe0368), which was
+retrieved through [Objaverse](https://objaverse.allenai.org/) (Deitke et al., CVPR 2023) and
+licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). The example assets,
+including the two generations derived from it, retain that license and stay excluded from the MIT
+license covering the code; see `examples/rifle/LICENSE`.
 
 ## Reproducibility
 
