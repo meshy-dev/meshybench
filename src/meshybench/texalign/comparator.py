@@ -3,7 +3,7 @@
 Semantic Details: for each foreground reference cell, the best cosine among the candidate's
 foreground tokens within +-tol cells, averaged over the union foreground; a cell only one side
 covers counts 0. Texture Style: distance between pooled foreground token clouds, mean L2 distance
-plus covariance Frobenius distance normalised by the geometric mean of the two covariance norms.
+plus covariance Frobenius distance normalized by the geometric mean of the two covariance norms.
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def pattern_score(ref_feat, cand_feat, grid: int, tol: int) -> float:
 
 
 def style_dist(feat_a, feat_b) -> tuple[float, float]:
-    """(mean distance, normalised covariance distance); the style distance is their sum."""
+    """(mean distance, normalized covariance distance); the style distance is their sum."""
     A = feat_a["tokens"][feat_a["fg"]].astype(np.float64)
     B = feat_b["tokens"][feat_b["fg"]].astype(np.float64)
     if len(A) < 2 or len(B) < 2:

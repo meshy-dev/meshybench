@@ -1,7 +1,7 @@
 """Color: CIELCh agreement in hue, saturation and value between two albedo samples.
 
 The reference surface is split into K_REGIONS k-means regions of its sample positions and a
-candidate point takes the region of the nearest centre. Per channel, a mean term compares the
+candidate point takes the region of the nearest center. Per channel, a mean term compares the
 per-region means weighted by region size and a spread term compares the whole-surface spread;
 both map a difference d to exp(-d / scale) in CIELCh units. Hue is circular and weighted by
 chroma above CHROMA_FLOOR; its spread is the circular standard deviation. Saturation and value

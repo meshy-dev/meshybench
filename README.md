@@ -1,7 +1,7 @@
 # meshybench
 
-Three benchmarks for image-to-3D generation, each a self-contained module with the exact
-implementation behind the published numbers.
+We have three benchmarks for image-to-3D generation. Each benchmark is a self-contained module that
+contains the exact implementation behind the published numbers.
 
 | module | measures | needs |
 |---|---|---|
@@ -18,7 +18,7 @@ pytest -q                                                # GPU tests skip visibl
 ```
 
 The texture benchmark downloads `facebook/dinov2-base` at a pinned revision on first use.
-Draco-compressed GLB files must be decompressed before scoring: trimesh decodes them to empty
+Draco-compressed GLB files must be decompressed before scoring. Trimesh decodes them to empty
 geometry, and `meshalign.load_mesh` refuses such a file.
 
 ## Geometry Alignment
@@ -30,22 +30,23 @@ r = meshalign.score("generated.glb", gt)
 # {"proportion": 0.93, "spatial": 0.83, "semantic": 0.76, "overall": 0.84, "signals": {...}}
 ```
 
-Each mesh is sampled with 400,000 area-uniform points, centred on the sample's centre of mass and
+Each mesh is sampled with 400,000 area-uniform points, centered on the sample's center of mass, and
 scaled by its root-mean-square radius. The 24 proper axis-aligned rotations are ranked by symmetric
-nearest-neighbour distance on a 1,500-point subset, the best four are refined by 30 rigid ICP
-iterations on a 20,000-point subset, and the lowest residual is kept. Scale is applied once; ICP
-never rescales.
+nearest-neighbor distance on a 1,500-point subset. The pipeline refines the best four rotations
+with 30 rigid ICP iterations on a 20,000-point subset and keeps the lowest residual. Scale is
+applied once, and ICP never rescales.
 
-- **Overall Proportion**: intersection over union of the 16^3 occupancy grids of the two samples.
-- **Spatial Distribution**: 1 minus the mean 1D Wasserstein distance over 128 fixed unit
-  directions between the projected occupied 64^3 voxel centres, divided by 0.18 and clipped to
+- **Overall Proportion**: the intersection over union of the 16^3 occupancy grids of the two
+  samples.
+- **Spatial Distribution**: calculated as 1 minus the mean 1D Wasserstein distance over 128 fixed
+  unit directions between the projected occupied 64^3 voxel centers, divided by 0.18 and clipped to
   [0, 1]. Each 1D distance is read from 512 evenly spaced quantiles of the two projections.
-- **Surface Details**: 1 minus the difference between the two-way nearest-neighbour F-scores at
-  distance thresholds 0.10 and 0.02 of the RMS radius, on 6,000 query points per side, clipped
-  to [0, 1].
+- **Surface Details**: 1 minus the difference between the two-way nearest-neighbor F-scores at
+  distance thresholds 0.10 and 0.02 of the RMS radius, on 6,000 query points per side, clipped to
+  [0, 1].
 - **overall**: the unweighted mean of the three.
 
-A mesh scored against itself gives 1.0 in every dimension.
+A mesh scored against itself returns 1.0 in every dimension.
 
 ## Texture Alignment
 
@@ -61,31 +62,33 @@ r = texalign.score("painted_input.glb", ref, shared)
 texalign.geotex_self("generated.glb")                        # Mesh-Texture Agreement, reference free
 ```
 
-The candidate is placed in the reference frame by the geometry alignment registration above and
-rendered from six axis-aligned orthographic views at 1554 pixels (unshaded base colour, fixed
-half-width of 2 RMS radii). Each view is cut into nine 518-pixel tiles embedded by DINOv2-base,
-giving a 111 by 111 patch-token grid per view.
+The geometry alignment registration above places the candidate in the reference frame. The system
+renders the candidate from six axis-aligned orthographic views at 1554 pixels with unshaded base
+color and a fixed half-width of 2 RMS radii. The system cuts each view into nine 518-pixel tiles.
+DINOv2-base embeds these tiles, producing a 111 by 111 patch-token grid per view.
 
-- **Color**: 40,000 area-uniform base-colour samples per side, read per geometry with glTF
-  REPEAT wrap. The reference is split into 12 k-means regions of sample positions; per channel
-  (hue, saturation, value in CIELCh) a region-mean term and a whole-surface spread term map
-  differences through exp(-d / s) with s = 20 for hue and 12 otherwise, combined 0.7 and 0.3,
-  and the channels weighted 0.5, 0.3, 0.2.
-- **Texture Style** (`style`): pooled foreground tokens; d is the mean distance plus the
-  normalised covariance distance; score exp(-max(d - 0.60, 0) / 0.70).
-- **Semantic Details** (`pattern`): for each foreground reference patch the best cosine among
-  the candidate's patches within 3 cells, averaged over the union foreground per view and over
-  the six views; a patch only one side covers scores 0.
+- **Color**: The pipeline reads 40,000 area-uniform base-color samples per side per geometry with
+  glTF REPEAT wrap. The reference is split into 12 k-means regions of sample positions. For each
+  channel of hue, saturation, and value in CIELCh, a region-mean term and a whole-surface spread
+  term map differences through `exp(-d / s)` with `s = 20` for hue and `12` otherwise. The
+  calculation combines the terms with weights of 0.7 and 0.3, and it weights the channels at 0.5,
+  0.3, and 0.2.
+- **Texture Style** (`style`): pooled foreground tokens; d is the mean distance plus the normalized
+  covariance distance; score exp(-max(d - 0.60, 0) / 0.70).
+- **Semantic Details** (`pattern`): the best cosine similarity among candidate patches within 3
+  cells for each foreground reference patch. The calculation averages these values over the union
+  foreground per view and over the six views. A patch that only one side covers scores 0.
 - **overall**: the unweighted mean of the three.
-- **Mesh-Texture Agreement** (`geotex_self`): on 150,000 surface samples scaled to a unit
-  bounding sphere, geometry ridges (curvature above 0.12 over 40 neighbours) and texture edges
-  (Lab distance above 8 after two neighbourhood averages) within 0.08 of each other form the
-  co-change domain; each member's offset d scores exp(-max(d - 0.012, 0) / 0.035), weighted by
-  ridge curvature and edge strength. A uniform albedo or an empty domain raises ValueError.
+- **Mesh-Texture Agreement** (`geotex_self`): calculated on 150,000 surface samples scaled to a unit
+  bounding sphere. Geometry ridges have curvature above 0.12 over 40 neighbors, and texture edges
+  have Lab distance above 8 after two neighborhood averages. Geometry ridges and texture edges
+  within 0.08 of each other form the co-change domain. Each member's offset `d` scores `exp(-max(d -
+  0.012, 0) / 0.035)`, weighted by ridge curvature and edge strength. A uniform albedo or an empty
+  domain raises `ValueError`.
 
-For an identical-mesh experiment the input mesh is registered once and each painter's file is
-mapped onto it by the axis-aligned similarity that reproduces the input vertices, so every
-painter is scored on the same registration.
+We register the input mesh once for an identical-mesh experiment. We map each painter's file onto
+this mesh through the axis-aligned similarity that reproduces the input vertices, so every painter
+is scored on the same registration.
 
 ## Mesh Details
 
@@ -96,35 +99,35 @@ res.score                      # richness at 1024, the number of record
 res.values                     # richness_1024, richness_2048, richness_4096, quality_4096
 ```
 
-The mesh is rendered as face normals from eight fixed directions into an 8192 by 8192
-orthographic buffer with its longest extent spanning 98 percent of the frame.
+The mesh is rendered as face normals from eight fixed directions into an 8192 by 8192 orthographic
+buffer. Its longest extent spans 98 percent of the frame.
 
-- **Richness A(N)**: at screen resolution N each pixel takes a stratified 2 by 2 sub-sample of
-  its raster block; the pixel is active when the circular spread of the four normals exceeds 2
-  degrees. A(N) is the active fraction over fully covered pixels pooled over the eight views.
-- **Quality DQ**: at base 512 each block takes a stratified 8 by 8 sub-sample; blocks whose
-  spread lies in [2, 20) degrees are detail blocks. Up to 1,500 per view are scored by 1 minus
-  the entropy of the perpendicular tilt histogram (0.5 degree bins) relative to the entropy of
-  the widest spread the block could show; block scores are averaged inside three spread strata,
-  across the strata holding at least 30 blocks, and across views.
+- **Richness A(N)**: the active fraction over fully covered pixels pooled over the eight views. At
+  screen resolution `N`, each pixel takes a stratified 2 by 2 sub-sample of its raster block. The
+  pixel is active when the circular spread of the four normals exceeds 2 degrees.
+- **Quality DQ**: at base 512, each block takes a stratified 8 by 8 sub-sample. Blocks whose spread
+  lies in [2, 20) degrees are detail blocks. The metric scores up to 1,500 detail blocks per view by
+  1 minus the entropy of the perpendicular tilt histogram (0.5 degree bins) relative to the entropy
+  of the widest spread the block could show. The metric averages block scores inside three spread
+  strata, across the strata holding at least 30 blocks, and across views.
 
-Score uncompressed geometry: transport quantisation inflates richness on dense meshes while
-staying invisible. A mesh with fewer than 50 active pixels at 1024 gets `status == "too_small"`
-and no score.
+We score uncompressed geometry. Transport quantization inflates richness on dense meshes while
+staying invisible. A mesh with fewer than 50 active pixels at 1024 gets `status == "too_small"` and
+receives no score.
 
 ## Shipped Example
 
-`examples/rifle/` holds one Objaverse reference model (`reference.glb`, 140,482 faces, one 4K
-texture), the rendered input view (`input.jpg`) and two generations made from it: `meshy7.glb`
-(Meshy 7, meshy-7.1 at standard geometry resolution) and `tripo31.glb` (Tripo 3.1). The meshes are
-stored with Git LFS.
+The directory `examples/rifle/` contains one Objaverse reference model (`reference.glb`, 140,482
+faces, one 4K texture), the rendered input view (`input.jpg`), and two generations made from it:
+`meshy7.glb` (Meshy 7, meshy-7.1 at standard geometry resolution) and `tripo31.glb` (Tripo 3.1). The
+meshes are stored with Git LFS.
 
 ```bash
 python examples/run_rifle.py
 ```
 
-scores both generations with the three benchmarks and compares every value with
-`examples/rifle/expected.json` at the float32 tolerance. Expected values, in percent:
+The script scores both generations with the three benchmarks and compares every value with
+`examples/rifle/expected.json` at the float32 tolerance. The expected values are given in percent:
 
 | benchmark | dimension | Meshy 7 | Tripo 3.1 |
 |---|---|---|---|
@@ -142,11 +145,11 @@ scores both generations with the three benchmarks and compares every value with
 | mesh details | richness 4096 | 15.7 | 13.5 |
 | mesh details | DQ 4096 | 51.9 | 60.0 |
 
-One object shows what the metrics return and lets a user check an installation; it is not a
-comparison of the two systems.
+The object displays the returned metrics and lets a user verify an installation. It does not compare
+the two systems.
 
 ## Reproducibility
 
-Every stage uses fixed seeds, fixed views and a pinned descriptor revision. Results are
-numerically identical across runs on one machine and agree to float32 precision, about 1e-4 on
-values in [0, 1], across machines and CUDA devices.
+Every stage is configured with fixed seeds, fixed views, and a pinned descriptor revision. Runs on
+one machine produce numerically identical results. Across machines and CUDA devices, the results
+agree to float32 precision, about 1e-4 on values in [0, 1].

@@ -1,9 +1,9 @@
-"""Registration: RMS normalisation once per mesh, then rigid multi-start ICP.
+"""Registration: RMS normalization once per mesh, then rigid multi-start ICP.
 
 Scale is fixed once from each point set's RMS radius and ICP is rigid: a per-iteration rescale
 lets ICP shrink a bad reconstruction inside the reference and absorb the proportion error the
 metric must charge. The coarse search ranks the 24 proper axis-aligned rotations (no
-reflections) by symmetric nearest-neighbour distance on N_COARSE points; the best four are each
+reflections) by symmetric nearest-neighbor distance on N_COARSE points; the best four are each
 refined by ICP_ITERS rigid iterations on the N_REG-point registration subsample, and the lowest
 residual wins.
 """
@@ -56,7 +56,7 @@ def rigid(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 def register(gen: np.ndarray, gt: np.ndarray,
              gt_tree: cKDTree | None = None) -> tuple[np.ndarray, np.ndarray]:
-    """(A, b) with aligned = gen @ A.T + b for RMS-normalised point sets; A is a rotation."""
+    """(A, b) with aligned = gen @ A.T + b for RMS-normalized point sets; A is a rotation."""
     if gt_tree is None:
         gt_tree = cKDTree(gt)
     gen_c = gen[np.linspace(0, len(gen) - 1, min(N_COARSE, len(gen))).astype(int)]

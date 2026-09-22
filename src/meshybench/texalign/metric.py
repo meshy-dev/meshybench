@@ -1,7 +1,7 @@
 """Texture alignment: Color, Texture Style and Semantic Details of a textured model against its
 reference, all in the reference frame of the geometry alignment registration.
 
-The candidate is registered to the reference by meshalign (RMS normalisation once per mesh, 24
+The candidate is registered to the reference by meshalign (RMS normalization once per mesh, 24
 proper rotations, rigid ICP) and rendered in that frame. For an identical-mesh experiment the
 input mesh is registered once and each painter's file is mapped onto the input by the exact
 axis-aligned similarity that reproduces the input vertices.
@@ -122,7 +122,7 @@ def _color(ref, cand_glb, R, c, t) -> dict:
 
 
 class Reference:
-    """A reference prepared once: meshalign ground truth, colour regions and descriptor tokens."""
+    """A reference prepared once: meshalign ground truth, color regions and descriptor tokens."""
 
     def __init__(self, glb_path: str):
         from scipy.cluster.vq import kmeans2
@@ -159,7 +159,7 @@ def prepare_shared_input(input_glb: str, ref: Reference) -> SharedInput:
 
 def score(cand_glb: str, ref: Reference, shared_input: SharedInput | None = None) -> dict:
     """pattern (Semantic Details), style (Texture Style), color and overall, with the raw style
-    distance, the colour channels, the transform used and the registration residual."""
+    distance, the color channels, the transform used and the registration residual."""
     out = {}
     if shared_input is None:
         A, mu, s, b, resid, _ = _geom_register(cand_glb, ref.gt)

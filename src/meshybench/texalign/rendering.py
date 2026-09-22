@@ -1,7 +1,7 @@
-"""Unshaded base-colour rendering: six axis-aligned orthographic views with nvdiffrast.
+"""Unshaded base-color rendering: six axis-aligned orthographic views with nvdiffrast.
 
 A view looks at the origin from distance 6 along an axis with a fixed half-width of XMAG RMS
-radii, flat base colour over white, textures sampled trilinearly with glTF REPEAT wrap, alpha
+radii, flat base color over white, textures sampled trilinearly with glTF REPEAT wrap, alpha
 below 0.5 cut out, image row 0 at the top.
 """
 from __future__ import annotations
@@ -34,8 +34,8 @@ def _base_color_factor(m) -> np.ndarray:
 
 
 def prep_geoms(geoms):
-    """GPU buffers per geometry: vertices, faces, texture coordinates, texture, vertex colours,
-    base colour factor. A texture is uploaded once however many geometries share it."""
+    """GPU buffers per geometry: vertices, faces, texture coordinates, texture, vertex colors,
+    base color factor. A texture is uploaded once however many geometries share it."""
     import torch
 
     dev = torch.device("cuda")
@@ -56,7 +56,7 @@ def prep_geoms(geoms):
         u = getattr(vis, "uv", None)
         if t is not None:
             if u is None or len(u) != len(g.vertices):
-                raise ValueError("geometry has a base-colour texture but no matching UV array")
+                raise ValueError("geometry has a base-color texture but no matching UV array")
             uv = torch.as_tensor(np.asarray(u, np.float32), device=dev)
             if id(t) in tex_cache:
                 tex = tex_cache[id(t)]
@@ -84,7 +84,7 @@ def _mip_levels(h: int, w: int) -> int:
 
 
 def render_views(prepped, res, transform):
-    """[(colour uint8 res x res x 3 over white, foreground mask float), ...] for VIEWS.
+    """[(color uint8 res x res x 3 over white, foreground mask float), ...] for VIEWS.
     transform = (R, c, t) places vertices as c * R @ x + t before the camera."""
     import torch
 

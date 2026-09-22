@@ -1,12 +1,12 @@
-"""The three geometry alignment signals, computed on RMS-normalised, registered point samples.
+"""The three geometry alignment signals, computed on RMS-normalized, registered point samples.
 
 Overall Proportion   IoU of 16^3 occupancy grids, each grid the max-pool of a 64^3 grid stamped by
                      the dense surface sample on a fixed window of +-2.6 RMS radii.
 Spatial Distribution 1 - W1 / W1_D0 clipped to [0, 1], W1 the mean over 128 fixed unit directions
-                     of the 1D Wasserstein distance between the projected occupied-voxel centres,
+                     of the 1D Wasserstein distance between the projected occupied-voxel centers,
                      read from 512 evenly spaced quantiles of each projection.
 Surface Details      1 - (F_0.10 - F_0.02) clipped to [0, 1], F_tau the F-score of the two-way
-                     nearest-neighbour match at distance tau, on 6,000 query points per side
+                     nearest-neighbor match at distance tau, on 6,000 query points per side
                      against the other side's full dense sample.
 """
 from __future__ import annotations

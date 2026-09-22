@@ -2,9 +2,9 @@
 reference free.
 
 On SURF_N_SAMPLE area-uniform surface points scaled to a unit bounding sphere, each point's
-SURF_K nearest neighbours give its curvature (mean 1 - |n.n'|) and, after SURF_LP_PASSES
-neighbourhood averages of the albedo, its texture edge strength (largest Lab distance to a
-neighbour). Points with curvature above SURF_CURV_RIDGE are ridges, points with edge strength
+SURF_K nearest neighbors give its curvature (mean 1 - |n.n'|) and, after SURF_LP_PASSES
+neighborhood averages of the albedo, its texture edge strength (largest Lab distance to a
+neighbor). Points with curvature above SURF_CURV_RIDGE are ridges, points with edge strength
 above SURF_TEDGE_STRONG are texture edges. The co-change domain is every ridge within
 SURF_CAPTURE_R of a texture edge and every texture edge within SURF_CAPTURE_R of a ridge; each
 member's offset d to the nearest point of the other kind scores exp(-max(d - SURF_OFFSET_TOL, 0)

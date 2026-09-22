@@ -25,7 +25,7 @@ DIMS = {"proportion": "occ_iou_16", "spatial": "w1_spatial", "semantic": "surf_d
 
 @dataclass
 class GroundTruth:
-    """A reference prepared once: normalised vertices, the registration subsample with its
+    """A reference prepared once: normalized vertices, the registration subsample with its
     KD-tree, the dense sample with its KD-tree, and the occupancy grid."""
     verts: np.ndarray
     faces: np.ndarray
@@ -56,7 +56,7 @@ def prepare_gt(mesh: trimesh.Trimesh | str) -> GroundTruth:
 
 
 def align_gen(gt: GroundTruth, gen_mesh: trimesh.Trimesh) -> np.ndarray:
-    """Dense sample of the generated mesh in the reference's normalised frame."""
+    """Dense sample of the generated mesh in the reference's normalized frame."""
     Vg = np.asarray(gen_mesh.vertices)
     Fg = np.asarray(gen_mesh.faces)
     gen_raw = dense_sample(Vg, Fg)

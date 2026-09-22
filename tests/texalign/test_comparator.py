@@ -1,4 +1,4 @@
-"""Comparator and colour statistics. The Semantic Details comparator runs on CUDA and its tests
+"""Comparator and color statistics. The Semantic Details comparator runs on CUDA and its tests
 skip visibly without one."""
 import numpy as np
 import pytest

@@ -38,7 +38,7 @@ def _model():
 
 
 def tokens(imgs):
-    """(N, GRID*GRID, C) L2-normalised patch tokens for uint8 RGB images of RES x RES pixels."""
+    """(N, GRID*GRID, C) L2-normalized patch tokens for uint8 RGB images of RES x RES pixels."""
     import torch
     from PIL import Image
 

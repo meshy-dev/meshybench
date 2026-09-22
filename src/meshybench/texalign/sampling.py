@@ -1,8 +1,8 @@
-"""Area-uniform surface sampling with base colour, per geometry.
+"""Area-uniform surface sampling with base color, per geometry.
 
 Points are allocated to geometries by area and drawn with a fixed seed per geometry. The base
-colour is the texture read bilinearly at the interpolated texture coordinate with glTF REPEAT
-wrap, times the base colour factor, returned as linear RGB in [0, 1].
+color is the texture read bilinearly at the interpolated texture coordinate with glTF REPEAT
+wrap, times the base color factor, returned as linear RGB in [0, 1].
 """
 
 from __future__ import annotations
@@ -71,7 +71,7 @@ def _base_color_factor(mat) -> np.ndarray:
 
 
 def _albedo(g, fidx, bary) -> np.ndarray:
-    """glTF base colour at sampled points: texture times factor, else vertex colours, else the
+    """glTF base color at sampled points: texture times factor, else vertex colors, else the
     factor alone."""
     vis = g.visual
     faces = g.faces[fidx]
@@ -80,7 +80,7 @@ def _albedo(g, fidx, bary) -> np.ndarray:
     img = _texture_array(mat) if mat is not None else None
     if img is not None:
         if uv is None or len(uv) != len(g.vertices):
-            raise ValueError("geometry has a base-colour texture but no matching UV array")
+            raise ValueError("geometry has a base-color texture but no matching UV array")
         uv_s = (bary[:, :, None] * np.asarray(uv)[faces]).sum(1)
         return srgb_to_linear(_bilinear(img, uv_s) * _base_color_factor(mat))
     vc = getattr(vis, "vertex_colors", None)
@@ -89,7 +89,7 @@ def _albedo(g, fidx, bary) -> np.ndarray:
         return srgb_to_linear(col)
     if mat is not None:
         return srgb_to_linear(np.tile(_base_color_factor(mat), (len(fidx), 1)))
-    raise ValueError("geometry has neither a material nor vertex colours")
+    raise ValueError("geometry has neither a material nor vertex colors")
 
 
 def sample_scene(glb: str, n: int = N_SAMPLE, seed: int = 0) -> Samples:
