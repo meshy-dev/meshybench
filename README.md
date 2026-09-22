@@ -1,6 +1,6 @@
 # meshybench
 
-We have three benchmarks for image-to-3D generation. Each benchmark is a self-contained module that
+This repo develops three benchmarks for image-to-3D generation. Each benchmark is a self-contained module that
 contains the exact implementation behind the published numbers.
 
 | module | measures | needs |
