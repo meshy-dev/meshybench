@@ -1,6 +1,6 @@
 """Score the shipped rifle example and compare with the expected values.
 
-    python examples/run_rifle.py            # needs torch, nvdiffrast and a CUDA device
+    python examples/run_rifle.py            # nvdiffrast on a CUDA device, else the CPU rasterizer
 
 The reference is an Objaverse model; the two generations were made from input.jpg by Meshy 7
 (meshy-7.1, standard geometry resolution) and Tripo 3.1. Every value must agree with

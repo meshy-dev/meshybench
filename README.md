@@ -6,15 +6,15 @@ module that contains the exact implementation behind the published numbers.
 | module | measures | needs |
 |---|---|---|
 | `meshybench.meshalign` | geometry alignment of a generated mesh against its reference mesh | numpy, scipy, trimesh |
-| `meshybench.texalign` | texture alignment of a textured model against its reference, and the reference-free Mesh-Texture Agreement | plus torch, nvdiffrast, transformers, Pillow, scikit-image, a CUDA device |
-| `meshybench.mesh_details` | detail richness and detail quality of a mesh, reference free | torch, nvdiffrast, a CUDA device |
+| `meshybench.texalign` | texture alignment of a textured model against its reference, and the reference-free Mesh-Texture Agreement | plus torch, transformers, Pillow, scikit-image; nvdiffrast on a CUDA device, or any CPU |
+| `meshybench.mesh_details` | detail richness and detail quality of a mesh, reference free | torch; nvdiffrast on a CUDA device, or any CPU |
 
 ## Install
 
 ```bash
 pip install -e ".[test]"
-pip install git+https://github.com/NVlabs/nvdiffrast   # not on PyPI
-pytest -q                                                # GPU tests skip visibly without CUDA
+pip install git+https://github.com/NVlabs/nvdiffrast   # not on PyPI; optional, CUDA only
+pytest -q                                                # full-raster tests skip visibly without CUDA
 ```
 
 The texture benchmark downloads `facebook/dinov2-base` at a pinned revision on first use.
@@ -154,6 +154,26 @@ retrieved through [Objaverse](https://objaverse.allenai.org/) (Deitke et al., CV
 licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). The example assets,
 including the two generations derived from it, retain that license and stay excluded from the MIT
 license covering the code; see `examples/rifle/LICENSE`.
+
+## Running Without CUDA
+
+On a CUDA device the renders use nvdiffrast. Everywhere else (a laptop CPU, Apple Silicon, CI)
+`meshybench.raster` provides a portable torch rasterizer with nvdiffrast's output contract, plus
+`interpolate` and a linear-mipmap-linear `texture` sampler. It follows cudaraster's triangle setup
+rather than approximating it: vertices snap to 1/16 pixel per 2048-pixel viewport tile, triangles
+that cross a tile are clipped as cudaraster clips them, coverage uses its fill convention for
+samples on an edge, depth uses its fixed-point plane equation, and the barycentrics and pixel
+differentials use the formulas of its forward shader. Nothing changes on CUDA.
+`MESHYBENCH_RASTER=torch` forces the portable path on a CUDA machine for comparison, and
+`tests/test_raster.py::test_parity_with_nvdiffrast` checks the two against each other there.
+
+`python examples/run_rifle.py` on an Apple Silicon CPU takes about 7.5 minutes. Every value agrees
+with `expected.json` within the tolerance except Tripo 3.1 `quality_4096` (0.5977 against 0.5995).
+DQ scores a seeded sample of 1,500 detail blocks per view, so one block crossing the 2 degree
+spread cutoff changes the list the permutation draws from and moves that view's DQ by about 0.01.
+Summing the same normals in float64 instead of float32 already changes the detail block count in
+3 of the 8 Tripo 3.1 views. DQ is a supporting value and never enters the score; richness at 1024,
+the number of record, agrees to within 6e-6 on both generations.
 
 ## Reproducibility
 

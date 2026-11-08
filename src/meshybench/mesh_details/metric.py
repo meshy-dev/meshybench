@@ -11,8 +11,10 @@ Quality DQ: the fixed-64 perpendicular-tilt entropy estimator at base 512 on the
 (quality.dq64_level), reported in the release as DQ at 4096; the mean over the eight views of
 the per-view DQ. Supporting value only; it never enters the score.
 
-Requires torch + nvdiffrast on a CUDA device. Richness is deterministic (fixed views, ordered
-stratified sampling); DQ draws its detail blocks from a permutation seeded by the view index.
+Runs on torch: nvdiffrast rasterizes on a CUDA device, and the portable rasterizer in
+meshybench.raster runs everywhere else (CPU included) with scores that agree within the release
+tolerance. Richness is deterministic (fixed views, ordered stratified sampling); DQ draws its
+detail blocks from a permutation seeded by the view index.
 """
 from __future__ import annotations
 
@@ -77,10 +79,17 @@ class DetailResult:
         }
 
 
-def _provenance() -> dict:
+def _provenance(dev) -> dict:
     import torch
-    import nvdiffrast
 
+    from ..raster import backend
+
+    rb = backend(dev)
+    nvdr_version = None
+    if rb == "nvdiffrast":
+        import nvdiffrast
+
+        nvdr_version = getattr(nvdiffrast, "__version__", None)
     return {
         "raster": RASTER,
         "threshold_deg": THRESHOLD_DEG,
@@ -90,17 +99,21 @@ def _provenance() -> dict:
         "dq_base": DQ_BASE,
         "dq_blocks_per_view": DQ_PER_VIEW,
         "torch": torch.__version__,
-        "nvdiffrast": getattr(nvdiffrast, "__version__", None),
-        "gpu": torch.cuda.get_device_name(torch.cuda.current_device()) if torch.cuda.is_available() else None,
+        "rasterizer": rb,
+        "nvdiffrast": nvdr_version,
+        "device": str(dev),
+        "gpu": torch.cuda.get_device_name(dev) if dev.type == "cuda" else None,
     }
 
 
-def evaluate(mesh) -> DetailResult:
-    """Score one mesh (path or trimesh.Trimesh, glTF frame with Y up) on the current CUDA device."""
+def evaluate(mesh, device=None) -> DetailResult:
+    """Score one mesh (path or trimesh.Trimesh, glTF frame with Y up). ``device`` defaults to the
+    current CUDA device when there is one, else the CPU."""
     import torch
 
-    if not torch.cuda.is_available():
-        raise RuntimeError("the detail metric renders with nvdiffrast and needs a CUDA device")
+    from ..raster import default_device
+
+    dev = torch.device(device) if device is not None else default_device()
     if not isinstance(mesh, trimesh.Trimesh):
         mesh = trimesh.load(mesh, force="mesh", process=False)
     if len(mesh.faces) == 0:
@@ -108,7 +121,7 @@ def evaluate(mesh) -> DetailResult:
     acc = {N: [0, 0] for N in LEVELS}
     dq_views = []
     for vi, d in enumerate(VIEWS.values()):
-        nrm, cover, tid = raster_view(mesh, d, RASTER)
+        nrm, cover, tid = raster_view(mesh, d, RASTER, device=dev)
         for N in LEVELS:
             n_active, n_ok = level_stats(nrm, cover, N, RASTER, THRESHOLD_DEG)
             acc[N][0] += n_active
@@ -117,7 +130,8 @@ def evaluate(mesh) -> DetailResult:
         if dq == dq:
             dq_views.append(dq)
         del nrm, cover, tid
-        torch.cuda.empty_cache()
+        if dev.type == "cuda":
+            torch.cuda.empty_cache()
     values: dict = {}
     for N in LEVELS:
         n_active, n_ok = acc[N]
@@ -126,7 +140,7 @@ def evaluate(mesh) -> DetailResult:
     info = {"faces": int(len(mesh.faces))}
     if acc[SCORE_LEVEL][0] < MIN_ACTIVE:
         return DetailResult(status="too_small", score=None, values=values, input=info,
-                            provenance=_provenance())
+                            provenance=_provenance(dev))
     return DetailResult(status="ok", score=values[f"richness_{SCORE_LEVEL}"], values=values,
-                        input=info, provenance=_provenance())
+                        input=info, provenance=_provenance(dev))
 

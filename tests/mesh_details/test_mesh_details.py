@@ -1,5 +1,8 @@
-"""Detail richness and quality on procedural meshes. GPU tests skip visibly without a CUDA
-device and nvdiffrast."""
+"""Detail richness and quality on procedural meshes. The full-raster tests run on CUDA, and on
+the CPU (portable rasterizer, a few minutes) when MESHYBENCH_SLOW_TESTS=1; otherwise they skip
+visibly."""
+import os
+
 import numpy as np
 import pytest
 import trimesh
@@ -7,16 +10,15 @@ import trimesh
 from meshybench import mesh_details as detail
 
 
-def _has_cuda():
+def _can_render():
     try:
         import torch
-        import nvdiffrast.torch  # noqa: F401
     except ImportError:
         return False
-    return torch.cuda.is_available()
+    return torch.cuda.is_available() or os.environ.get("MESHYBENCH_SLOW_TESTS") == "1"
 
 
-gpu = pytest.mark.skipif(not _has_cuda(), reason="needs torch + nvdiffrast on a CUDA device")
+gpu = pytest.mark.skipif(not _can_render(), reason="needs a CUDA device, or MESHYBENCH_SLOW_TESTS=1 for the CPU")
 
 
 def test_level_stats_rejects_non_multiple_raster():
