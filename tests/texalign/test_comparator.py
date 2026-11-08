@@ -1,20 +1,19 @@
-"""Comparator and color statistics. The Semantic Details comparator runs on CUDA and its tests
-skip visibly without one."""
+"""Comparator and color statistics. The Semantic Details comparator runs on any torch device."""
 import numpy as np
 import pytest
 
 from meshybench.texalign.comparator import pattern_score, style_dist
 
 
-def _has_cuda():
+def _has_torch():
     try:
-        import torch
+        import torch  # noqa: F401
     except ImportError:
         return False
-    return torch.cuda.is_available()
+    return True
 
 
-gpu = pytest.mark.skipif(not _has_cuda(), reason="needs torch on a CUDA device")
+gpu = pytest.mark.skipif(not _has_torch(), reason="needs torch")
 
 
 def _unit(x):

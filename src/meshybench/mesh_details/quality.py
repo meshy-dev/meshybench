@@ -69,7 +69,8 @@ def dq64_level(nrm, cover, tid, N: int, S: int, n_sample: int = DQ_PER_VIEW, see
     x = (n_sel * t1.unsqueeze(1)).sum(-1).cpu().numpy()            # (K,64)
     y = (n_sel * t2.unsqueeze(1)).sum(-1).cpu().numpy()
     del n_sel, mhat, t1, t2, base, up, alt, sums, cv
-    torch.cuda.empty_cache()
+    if dev.type == "cuda":
+        torch.cuda.empty_cache()
     qrad = np.radians(Q)
     strata_scores = {s: [] for s in STRATA}
     sig_sel = sig_np[ii, jj]

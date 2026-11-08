@@ -1,19 +1,21 @@
 """Eight-view face-normal rasterization for the mesh details metric.
 
 The mesh is normalized to a fixed extent, rotated so the view direction lands
-on +z, and rasterized orthographically with nvdiffrast into an S x S buffer of
-camera facing face normals plus a coverage mask. Requires torch + nvdiffrast
-on a CUDA device; deterministic (fixed views, no sampling).
+on +z, and rasterized orthographically into an S x S buffer of camera facing
+face normals plus a coverage mask. nvdiffrast rasterizes on CUDA; every other
+device uses the portable rasterizer in meshybench.raster. Deterministic (fixed
+views, no sampling).
 """
 from __future__ import annotations
 
 import numpy as np
 import trimesh
 
+from ..raster import default_device, rasterize
+
 RASTER = 8192
 W = 2.0            # normalized extent of the longest axis
 XMAG = 1.02        # orthographic half width relative to W / 2 (a 2% margin)
-_CTX: dict = {}
 
 _R3 = 1.0 / np.sqrt(3.0)
 # camera directions in the mesh frame (Y up); the camera looks along -d
@@ -42,15 +44,13 @@ def _rot_to_z(d):
     return np.eye(3) + vx + vx @ vx * (1.0 / (1.0 + c))
 
 
-def raster_view(mesh: trimesh.Trimesh, d, S: int = RASTER):
+def raster_view(mesh: trimesh.Trimesh, d, S: int = RASTER, device=None):
     """(nrm, cover, tid) at S x S for the view from direction d: camera facing face
-    normals per raster pixel, the coverage mask and the 1-based triangle id (0 = background)."""
+    normals per raster pixel, the coverage mask and the 1-based triangle id (0 = background).
+    ``device`` defaults to CUDA when available, else CPU."""
     import torch
-    import nvdiffrast.torch as dr
 
-    if "nvdr" not in _CTX:
-        _CTX["nvdr"] = dr.RasterizeCudaContext()
-    dev = torch.device("cuda")
+    dev = torch.device(device) if device is not None else default_device()
     R = _rot_to_z(d)
     mm = mesh.copy()
     mm.vertices = mm.vertices @ R.T
@@ -68,12 +68,13 @@ def raster_view(mesh: trimesh.Trimesh, d, S: int = RASTER):
     pos[0, :, 1] = torch.as_tensor(V[:, 1] / XMAG, dtype=torch.float32)
     pos[0, :, 2] = torch.as_tensor(-V[:, 2] / 3.0, dtype=torch.float32)
     pos[0, :, 3] = 1.0
-    rast, _ = dr.rasterize(_CTX["nvdr"], pos, torch.as_tensor(F, device=dev), resolution=[S, S])
+    rast, _ = rasterize(pos, torch.as_tensor(F, device=dev), [S, S])
     tid = rast[0, :, :, 3].long()
     del rast, pos
     cover = tid > 0
     fn_t = torch.as_tensor(np.vstack([[0, 0, 0], fn]), dtype=torch.float32, device=dev)
     nrm = fn_t[tid]
     nrm = torch.where(nrm[:, :, 2:3] < 0, -nrm, nrm)
-    torch.cuda.empty_cache()
+    if dev.type == "cuda":
+        torch.cuda.empty_cache()
     return nrm, cover, tid

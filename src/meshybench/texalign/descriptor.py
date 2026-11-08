@@ -32,7 +32,9 @@ def _model():
         # the processor's own default resize would discard the render resolution the grid assumes
         proc.crop_size = {"height": RES, "width": RES}
         proc.size = {"shortest_edge": RES}
-        mdl = AutoModel.from_pretrained(MODEL_NAME, revision=MODEL_REVISION).eval().cuda()
+        from ..raster import default_device
+
+        mdl = AutoModel.from_pretrained(MODEL_NAME, revision=MODEL_REVISION).eval().to(default_device())
         _M["m"] = (proc, mdl)
     return _M["m"]
 
@@ -46,7 +48,7 @@ def tokens(imgs):
     outs = []
     for i in range(0, len(imgs), TOKEN_BATCH):
         pil = [Image.fromarray(im) for im in imgs[i:i + TOKEN_BATCH]]
-        px = proc(images=pil, return_tensors="pt")["pixel_values"].cuda()
+        px = proc(images=pil, return_tensors="pt")["pixel_values"].to(next(mdl.parameters()).device)
         with torch.no_grad():
             h = mdl(pixel_values=px).last_hidden_state[:, DROP:, :]
         if h.shape[1] != GRID * GRID:

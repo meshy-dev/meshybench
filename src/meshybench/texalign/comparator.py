@@ -13,7 +13,9 @@ import numpy as np
 def pattern_score(ref_feat, cand_feat, grid: int, tol: int) -> float:
     import torch
 
-    dev = torch.device("cuda")
+    from ..raster import default_device
+
+    dev = default_device()
     sims = []
     for v in range(len(ref_feat["tokens"])):
         A = torch.as_tensor(ref_feat["tokens"][v], device=dev).reshape(grid, grid, -1)

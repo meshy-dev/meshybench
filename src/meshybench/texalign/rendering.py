@@ -1,4 +1,7 @@
-"""Unshaded base-color rendering: six axis-aligned orthographic views with nvdiffrast.
+"""Unshaded base-color rendering: six axis-aligned orthographic views.
+
+nvdiffrast renders on CUDA; every other device uses the portable rasterizer, interpolation and
+mipmapped texture sampling in meshybench.raster.
 
 A view looks at the origin from distance 6 along an axis with a fixed half-width of XMAG RMS
 radii, flat base color over white, textures sampled trilinearly with glTF REPEAT wrap, alpha
@@ -8,12 +11,12 @@ from __future__ import annotations
 
 import numpy as np
 
+from .. import raster
+
 VIEWS = [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)]
 XMAG = 2.0
 CAMERA_DISTANCE = 6.0
 ALPHA_CUTOFF = 0.5
-
-_CTX = {}
 
 
 def _look_at_rows(eye):
@@ -33,12 +36,13 @@ def _base_color_factor(m) -> np.ndarray:
     return fac / 255.0 if fac.max() > 1.001 else fac
 
 
-def prep_geoms(geoms):
-    """GPU buffers per geometry: vertices, faces, texture coordinates, texture, vertex colors,
-    base color factor. A texture is uploaded once however many geometries share it."""
+def prep_geoms(geoms, device=None):
+    """Device buffers per geometry: vertices, faces, texture coordinates, texture, vertex colors,
+    base color factor. A texture is uploaded once however many geometries share it. ``device``
+    defaults to CUDA when available, else CPU."""
     import torch
 
-    dev = torch.device("cuda")
+    dev = torch.device(device) if device is not None else raster.default_device()
     out = []
     tex_cache = {}
     for g in geoms:
@@ -88,12 +92,7 @@ def render_views(prepped, res, transform):
     transform = (R, c, t) places vertices as c * R @ x + t before the camera."""
     import torch
 
-    import nvdiffrast.torch as dr
-
-    dev = torch.device("cuda")
-    if "c" not in _CTX:
-        _CTX["c"] = dr.RasterizeCudaContext()
-    ctx = _CTX["c"]
+    dev = prepped[0]["V"].device if prepped else raster.default_device()
     R, c, t = transform
     Rm = torch.as_tensor(np.asarray(R, np.float32), device=dev)
     tv = torch.as_tensor(np.asarray(t, np.float32), device=dev)
@@ -113,22 +112,21 @@ def render_views(prepped, res, transform):
             depth = pc[:, 2]
             z = (depth - CAMERA_DISTANCE) / 20.0
             pos = torch.stack([x, y, z, torch.ones_like(x)], -1).unsqueeze(0)
-            rast, rast_db = dr.rasterize(ctx, pos.contiguous(), gp["F"], resolution=[res, res])
+            rast, rast_db = raster.rasterize(pos.contiguous(), gp["F"], [res, res])
             hit = rast[0, :, :, 3] > 0
             if not hit.any():
                 continue
-            dpx, _ = dr.interpolate(depth.reshape(1, -1, 1).contiguous(), rast, gp["F"])
+            dpx, _ = raster.interpolate(depth.reshape(1, -1, 1).contiguous(), rast, gp["F"])
             dpx = dpx[0, :, :, 0]
             alpha = None
             if gp["tex"] is not None:
-                uvpx, uv_da = dr.interpolate(gp["uv"].unsqueeze(0).contiguous(), rast, gp["F"],
-                                             rast_db=rast_db, diff_attrs="all")
-                rgba = dr.texture(gp["tex"], uvpx, uv_da, filter_mode="linear-mipmap-linear",
-                                  boundary_mode="wrap",
-                                  max_mip_level=_mip_levels(gp["tex"].shape[1], gp["tex"].shape[2]))[0]
+                uvpx, uv_da = raster.interpolate(gp["uv"].unsqueeze(0).contiguous(), rast, gp["F"],
+                                                 rast_db=rast_db, diff_attrs="all")
+                rgba = raster.texture(gp["tex"], uvpx, uv_da,
+                                      max_mip_level=_mip_levels(gp["tex"].shape[1], gp["tex"].shape[2]))[0]
                 col, alpha = rgba[:, :, :3], rgba[:, :, 3]
             elif gp["vcol"] is not None:
-                cpx, _ = dr.interpolate(gp["vcol"].unsqueeze(0).contiguous(), rast, gp["F"])
+                cpx, _ = raster.interpolate(gp["vcol"].unsqueeze(0).contiguous(), rast, gp["F"])
                 col = cpx[0]
             else:
                 col = torch.ones((res, res, 3), device=dev)
